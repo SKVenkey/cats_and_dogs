@@ -6,10 +6,10 @@ An end-to-end MLOps pipeline for binary image classification (Cats vs Dogs) cove
 
 S.NO.	NAME	                                      STUDENT ID	              CONTRIBUTION
 1.	VENKATESH S	                                 2024AA05505	              100%
-2.	MANDUTI SAI PRATHIMA	                       2024AA05177	              10%
-3.	RAJ KUMAR ROY	                               2024AA05646	              0%
-4.	MOHAMMAD SHEKAIB MAZHAR	                     2023AC05811	              0%
-5.	GITE GANESH BHAGWAN MEENA	                   2024AA05470	              0%
+2.	MANDUTI SAI PRATHIMA	                       2024AA05177	              100%
+3.	RAJ KUMAR ROY	                               2024AA05646	              100%
+4.	MOHAMMAD SHEKAIB MAZHAR	                     2023AC05811	              100%
+5.	GITE GANESH BHAGWAN MEENA	                   2024AA05470	              100%
 
 ---
 
