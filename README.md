@@ -4,6 +4,13 @@
 
 An end-to-end MLOps pipeline for binary image classification (Cats vs Dogs) covering model development, experiment tracking, containerisation, CI/CD, deployment, and monitoring.
 
+S.NO.	NAME	                                      STUDENT ID	              CONTRIBUTION
+1.	VENKATESH S	                                 2024AA05505	              100%
+2.	MANDUTI SAI PRATHIMA	                       2024AA05177	              10%
+3.	RAJ KUMAR ROY	                               2024AA05646	              0%
+4.	MOHAMMAD SHEKAIB MAZHAR	                     2023AC05811	              0%
+5.	GITE GANESH BHAGWAN MEENA	                   2024AA05470	              0%
+
 ---
 
 ## 📁 Project Structure
