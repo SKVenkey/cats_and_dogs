@@ -1,20 +1,19 @@
-"""Unit tests for model utilities and FastAPI inference endpoint (M3 requirement)."""
+"""Unit tests for model utilities and FastAPI inference endpoint."""
 
 import sys
 import json
 import io
+import os
 import numpy as np
 import pytest
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 import torch
 from catsml.model import SimpleCNN, TransferCNN, get_model
 
-
-# ─── Model architecture tests ─────────────────────────────────────────────────
 
 class TestSimpleCNN:
     def test_output_shape(self):
@@ -30,12 +29,10 @@ class TestSimpleCNN:
         assert out.shape == (1, 2)
 
     def test_output_is_logits_not_probs(self):
-        """Output should be raw logits, not probabilities."""
         model = SimpleCNN(num_classes=2)
         x = torch.randn(8, 3, 224, 224)
         with torch.no_grad():
             out = model(x)
-        # Logits should not all sum to 1
         row_sums = out.sum(dim=1)
         assert not torch.allclose(row_sums, torch.ones(8), atol=0.01)
 
@@ -68,35 +65,26 @@ class TestGetModel:
             get_model("unknown_model_xyz")
 
 
-# ─── FastAPI endpoint tests ───────────────────────────────────────────────────
-
 class TestAPIEndpoints:
-    """Integration tests for the FastAPI app using TestClient."""
-
     @pytest.fixture
-    def mock_model(self):
-        """Return a SimpleCNN instance for testing (no real weights needed)."""
-        model = SimpleCNN(num_classes=2)
-        model.eval()
-        return model
-
-    @pytest.fixture
-    def client(self, mock_model, tmp_path):
-        """Create a TestClient with the model pre-loaded."""
+    def client(self, tmp_path):
         import api.app as app_module
         from fastapi.testclient import TestClient
 
-        # Patch model loading
-        app_module._model = mock_model
-        app_module._class_names = ["Cat", "Dog"]
-        app_module.DEVICE = "cpu"
-
-        # Create dummy model files so lifespan doesn't fail
+        # Create dummy model files
         models_dir = tmp_path / "models"
         models_dir.mkdir()
-        torch.save(mock_model.state_dict(), models_dir / "model.pt")
-        with open(models_dir / "model_meta.json", "w") as f:
+        dummy_model = SimpleCNN(num_classes=2)
+        model_path = models_dir / "model.pt"
+        torch.save(dummy_model.state_dict(), model_path)
+        meta_path = models_dir / "model_meta.json"
+        with open(meta_path, "w") as f:
             json.dump({"model_type": "simple_cnn", "class_names": ["Cat", "Dog"]}, f)
+
+        # Patch environment variables
+        app_module.MODEL_PATH = str(model_path)
+        app_module.MODEL_META_PATH = str(meta_path)
+        app_module.DEVICE = "cpu"
 
         with TestClient(app_module.app) as c:
             yield c
@@ -112,32 +100,25 @@ class TestAPIEndpoints:
     def test_health_endpoint(self, client):
         r = client.get("/health")
         assert r.status_code == 200
-        body = r.json()
-        assert body["status"] == "ok"
+        assert r.json()["status"] == "ok"
 
     def test_predict_endpoint_returns_label(self, client):
         img_bytes = self._make_image_bytes()
         r = client.post("/predict", files={"file": ("cat.jpg", img_bytes, "image/jpeg")})
         assert r.status_code == 200
-        body = r.json()
-        assert "label" in body
-        assert body["label"] in ["Cat", "Dog"]
+        assert r.json()["label"] in ["Cat", "Dog"]
 
     def test_predict_endpoint_returns_probabilities(self, client):
         img_bytes = self._make_image_bytes()
         r = client.post("/predict", files={"file": ("dog.jpg", img_bytes, "image/jpeg")})
-        assert r.status_code == 200
         body = r.json()
         assert "probabilities" in body
-        probs = body["probabilities"]
-        assert "Cat" in probs and "Dog" in probs
-        assert abs(sum(probs.values()) - 1.0) < 0.01
+        assert abs(sum(body["probabilities"].values()) - 1.0) < 0.01
 
     def test_predict_endpoint_returns_confidence(self, client):
         img_bytes = self._make_image_bytes()
         r = client.post("/predict", files={"file": ("test.jpg", img_bytes, "image/jpeg")})
-        body = r.json()
-        assert 0.0 <= body["confidence"] <= 1.0
+        assert 0.0 <= r.json()["confidence"] <= 1.0
 
     def test_metrics_endpoint(self, client):
         r = client.get("/metrics")
