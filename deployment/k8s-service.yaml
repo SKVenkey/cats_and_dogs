@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: cats-dogs-api-svc
+  labels:
+    app: cats-dogs-api
+spec:
+  selector:
+    app: cats-dogs-api
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8000
+  type: LoadBalancer   # Use NodePort for minikube: type: NodePort

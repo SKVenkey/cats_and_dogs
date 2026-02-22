@@ -1,0 +1,30 @@
+stages:
+  prepare:
+    cmd: python scripts/prepare_data.py --data_dir data/raw
+    deps:
+      - scripts/prepare_data.py
+    outs:
+      - data/raw
+
+  train:
+    cmd: python scripts/train.py --data_dir data/raw --model_type simple_cnn --epochs 15
+    deps:
+      - scripts/train.py
+      - src/catsml/data.py
+      - src/catsml/model.py
+      - data/raw
+    params:
+      - params.yaml:
+          - train.model_type
+          - train.epochs
+          - train.batch_size
+          - train.lr
+    outs:
+      - models/model.pt
+      - models/model_meta.json
+    metrics:
+      - artifacts/metrics.json:
+          cache: false
+    plots:
+      - artifacts/loss_curves.png
+      - artifacts/confusion_matrix.png

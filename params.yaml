@@ -1,0 +1,5 @@
+train:
+  model_type: simple_cnn   # simple_cnn | transfer_resnet18
+  epochs: 15
+  batch_size: 32
+  lr: 0.001
